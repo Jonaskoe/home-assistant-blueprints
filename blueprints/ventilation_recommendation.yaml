@@ -87,5 +87,5 @@ action:
       message: >
         Ventilate now in {{ room_name }}: absolute humidity difference =
         {{ states(abs_humidity_difference_sensor) }} g/m³.
-        Inside: {{ states(abs_humidity_room_sensor) }} g/m³,
-        outside: {{ states(abs_humidity_outside_sensor) }} g/m³.
+        Inside: {{ states(abs_humidity_room_sensor) | round(2) }} g/m³,
+        outside: {{ states(abs_humidity_outside_sensor) | round(2) }} g/m³.
