@@ -48,10 +48,20 @@ blueprint:
       description: Notify service that receives the recommendation message.
       selector:
         text:
+    abs_humidity_threshold:
+      name: Absolute humidity threshold
+      description: Threshold for absolute humidity difference in g/m³ (default 3).
+      selector:
+        number:
+          min: 0
+          step: 0.1
+          unit_of_measurement: g/m³
+      default: 3
 
 mode: single
 
 variables:
+  abs_humidity_threshold: !input abs_humidity_threshold
   room_name: !input room_name
   abs_humidity_difference_sensor: !input abs_humidity_difference_sensor
   abs_humidity_outside_sensor: !input abs_humidity_outside_sensor
@@ -60,7 +70,7 @@ variables:
 trigger:
   - platform: numeric_state
     entity_id: !input abs_humidity_difference_sensor
-    above: 4
+    above: abs_humidity_threshold
     for: "00:10:00"
 
 condition:
