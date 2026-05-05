@@ -61,7 +61,6 @@ blueprint:
 mode: single
 
 variables:
-  abs_humidity_threshold: !input abs_humidity_threshold
   room_name: !input room_name
   abs_humidity_difference_sensor: !input abs_humidity_difference_sensor
   abs_humidity_outside_sensor: !input abs_humidity_outside_sensor
@@ -70,7 +69,7 @@ variables:
 trigger:
   - platform: numeric_state
     entity_id: !input abs_humidity_difference_sensor
-    above: abs_humidity_threshold
+    above: !input abs_humidity_threshold
     for: "00:10:00"
 
 condition:
