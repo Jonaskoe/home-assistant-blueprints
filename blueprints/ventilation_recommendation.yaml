@@ -1,0 +1,91 @@
+blueprint:
+  name: Ventilation Recommendation
+  description: >
+    Sends a notification when ventilation is recommended because the absolute
+    humidity difference between inside and outside is high enough for a
+    sustained period.
+  domain: automation
+  input:
+    room_name:
+      name: Room name
+      description: Display name of the room used in the notification title.
+      selector:
+        text:
+    abs_humidity_difference_sensor:
+      name: Absolute humidity difference sensor
+      description: >
+        Sensor with absolute humidity difference (inside minus outside) in g/m³.
+      selector:
+        entity:
+          domain: sensor
+    abs_humidity_outside_sensor:
+      name: Absolute humidity outside sensor
+      description: Sensor for outside absolute humidity in g/m³.
+      selector:
+        entity:
+          domain: sensor
+    abs_humidity_room_sensor:
+      name: Absolute humidity room sensor
+      description: Sensor for room absolute humidity in g/m³.
+      selector:
+        entity:
+          domain: sensor
+    persons_required_home:
+      name: Person(s) required at home
+      description: One or more person entities that must be home.
+      selector:
+        entity:
+          domain: person
+          multiple: true
+    window_contact_sensor:
+      name: Window contact sensor
+      description: Binary sensor for the room window contact.
+      selector:
+        entity:
+          domain: binary_sensor
+    notify_service:
+      name: Notification service
+      description: Notify service that receives the recommendation message.
+      selector:
+        text:
+
+mode: single
+
+variables:
+  room_name: !input room_name
+  abs_humidity_difference_sensor: !input abs_humidity_difference_sensor
+  abs_humidity_outside_sensor: !input abs_humidity_outside_sensor
+  abs_humidity_room_sensor: !input abs_humidity_room_sensor
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input abs_humidity_difference_sensor
+    above: 4
+    for: "00:10:00"
+
+condition:
+  - condition: state
+    entity_id: !input persons_required_home
+    state: "home"
+    match: any
+  - condition: template
+    value_template: >
+      {{ states('weather.forecast_home') not in [
+        'rainy', 'pouring', 'lightning', 'lightning-rainy',
+        'snowy', 'snowy-rainy', 'hail'] }}
+  - condition: time
+    after: "08:00:00"
+    before: "21:00:00"
+  - condition: state
+    entity_id: !input window_contact_sensor
+    state: "off"
+
+action:
+  - service: !input notify_service
+    data:
+      title: "Ventilation recommended in {{ room_name }}"
+      message: >
+        Ventilate now in {{ room_name }}: absolute humidity difference =
+        {{ states(abs_humidity_difference_sensor) }} g/m³.
+        Inside: {{ states(abs_humidity_room_sensor) }} g/m³,
+        outside: {{ states(abs_humidity_outside_sensor) }} g/m³.
