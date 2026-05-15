@@ -57,6 +57,23 @@ blueprint:
           step: 0.1
           unit_of_measurement: g/m³
       default: 3
+    relative_humidity_sensor:
+      name: Relative humidity sensor
+      description: Sensor for room relative humidity in %.
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+    relative_humidity_threshold:
+      name: Relative humidity threshold
+      description: Threshold for room relative humidity in % (default 60).
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+      default: 60
     recommendation_after:
       name: Recommendation start time
       description: Earliest time to send ventilation recommendations.
@@ -97,6 +114,9 @@ condition:
   - condition: time
     after: !input recommendation_after
     before: !input recommendation_before
+  - condition: numeric_state
+    entity_id: !input relative_humidity_sensor
+    above: !input relative_humidity_threshold
   - condition: state
     entity_id: !input window_contact_sensor
     state: "off"
