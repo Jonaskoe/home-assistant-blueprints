@@ -57,6 +57,18 @@ blueprint:
           step: 0.1
           unit_of_measurement: g/m³
       default: 3
+    recommendation_after:
+      name: Recommendation start time
+      description: Earliest time to send ventilation recommendations.
+      selector:
+        time:
+      default: "08:00:00"
+    recommendation_before:
+      name: Recommendation end time
+      description: Latest time to send ventilation recommendations.
+      selector:
+        time:
+      default: "21:00:00"
 
 mode: single
 
@@ -83,8 +95,8 @@ condition:
         'rainy', 'pouring', 'lightning', 'lightning-rainy',
         'snowy', 'snowy-rainy', 'hail'] }}
   - condition: time
-    after: "08:00:00"
-    before: "21:00:00"
+    after: !input recommendation_after
+    before: !input recommendation_before
   - condition: state
     entity_id: !input window_contact_sensor
     state: "off"
