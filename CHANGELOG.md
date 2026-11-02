@@ -1,3 +1,9 @@
+## v0.3.0 (2026-11-02)
+
+### Feat
+
+- **contact_left_open_notification**: add initial version of contact left open notification blueprint
+
 ## v0.2.0 (2026-05-15)
 
 ### Feat
