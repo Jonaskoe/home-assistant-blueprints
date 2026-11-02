@@ -6,6 +6,10 @@ blueprint:
     several contacts; each contact gets its own notification. Optional
     reminders repeat the notification while the contact stays open.
 
+    Contacts can be picked one by one, or by area, device or label. With a
+    label (e.g. "Windows"), contacts that get the label later are picked up
+    without editing the automation.
+
     Notifications are sent through one or more notify actions (for example
     `notify.mobile_app_my_phone` or a notify group). Clearing uses the
     Companion App `clear_notification` message, so it only works for
@@ -14,7 +18,7 @@ blueprint:
   author: Jonaskoe
   source_url: https://github.com/Jonaskoe/home-assistant-blueprints/blob/main/blueprints/contact_left_open_notification.yaml
   homeassistant:
-    min_version: "2024.10.0"
+    min_version: "2026.7.0"
   input:
     contacts:
       name: Contacts
@@ -24,7 +28,9 @@ blueprint:
           name: Contact sensors
           description: >
             One or more contact sensors (`on` = open). Each sensor is handled
-            on its own.
+            on its own. Can be combined with the targets below; do not pick
+            the same contact in both, or it notifies twice.
+          default: []
           selector:
             entity:
               multiple: true
@@ -35,6 +41,23 @@ blueprint:
                   device_class: window
                 - domain: binary_sensor
                   device_class: opening
+                - domain: binary_sensor
+                  device_class: garage_door
+        contact_target:
+          name: Contacts by area, device or label
+          description: >
+            Door, window and garage door contacts picked by area, device or
+            label. Contacts that are added to the area or label later are
+            picked up automatically. Contacts with the `opening` device class
+            are only supported in the list above.
+          default: {}
+          selector:
+            target:
+              entity:
+                - domain: binary_sensor
+                  device_class: door
+                - domain: binary_sensor
+                  device_class: window
                 - domain: binary_sensor
                   device_class: garage_door
         open_duration:
@@ -140,6 +163,18 @@ triggers:
     entity_id: !input contact_sensors
     to: "on"
     for: !input open_duration
+  - trigger: door.opened
+    target: !input contact_target
+    options:
+      for: !input open_duration
+  - trigger: window.opened
+    target: !input contact_target
+    options:
+      for: !input open_duration
+  - trigger: garage_door.opened
+    target: !input contact_target
+    options:
+      for: !input open_duration
 
 actions:
   - variables:

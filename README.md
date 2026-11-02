@@ -22,7 +22,7 @@ This repository collects simple, reusable blueprints that can be imported into H
 
 ### Contact Left Open Notification
 
-Sends a notification when a door or window has been open for a set time and clears it again once the contact closes. One automation can watch several contacts, with optional reminders while a contact stays open.
+Sends a notification when a door or window has been open for a set time and clears it again once the contact closes. One automation can watch several contacts, with optional reminders while a contact stays open. Contacts can be picked one by one or by area, device or label, so contacts that get the label later are picked up automatically. Requires Home Assistant 2026.7 or later.
 
 [![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/Jonaskoe/home-assistant-blueprints/refs/heads/main/blueprints/contact_left_open_notification.yaml)
 
