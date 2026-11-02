@@ -11,6 +11,7 @@ This repository collects simple, reusable blueprints that can be imported into H
 ```text
 .
 ├── blueprints/
+│   ├── contact_left_open_notification.yaml
 │   └── ventilation_recommendation.yaml
 ├── .gitignore
 ├── LICENSE
@@ -18,6 +19,16 @@ This repository collects simple, reusable blueprints that can be imported into H
 ```
 
 ## Blueprints
+
+### Contact Left Open Notification
+
+Sends a notification when a door or window has been open for a set time and clears it again once the contact closes. One automation can watch several contacts, with optional reminders while a contact stays open.
+
+[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/Jonaskoe/home-assistant-blueprints/refs/heads/main/blueprints/contact_left_open_notification.yaml)
+
+
+**Path**
+`blueprints\contact_left_open_notification.yaml`
 
 ### Ventilation Recommendation (Humidity Difference)
 
