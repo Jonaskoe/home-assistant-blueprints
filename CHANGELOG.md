@@ -1,3 +1,9 @@
+## v0.4.0 (2026-11-02)
+
+### Feat
+
+- **contact_left_open_notification**: pick contacts by area, device or label
+
 ## v0.3.0 (2026-11-02)
 
 ### Feat
