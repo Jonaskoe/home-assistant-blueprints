@@ -1,0 +1,193 @@
+blueprint:
+  name: Contact Left Open Notification
+  description: >
+    Sends a notification when a door or window has been open for a set time
+    and clears it again once the contact closes. One automation can watch
+    several contacts; each contact gets its own notification. Optional
+    reminders repeat the notification while the contact stays open.
+
+    Notifications are sent through one or more notify actions (for example
+    `notify.mobile_app_my_phone` or a notify group). Clearing uses the
+    Companion App `clear_notification` message, so it only works for
+    Companion App targets.
+  domain: automation
+  author: Jonaskoe
+  source_url: https://github.com/Jonaskoe/home-assistant-blueprints/blob/main/blueprints/contact_left_open_notification.yaml
+  homeassistant:
+    min_version: "2024.10.0"
+  input:
+    contacts:
+      name: Contacts
+      icon: mdi:door-open
+      input:
+        contact_sensors:
+          name: Contact sensors
+          description: >
+            One or more contact sensors (`on` = open). Each sensor is handled
+            on its own.
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: binary_sensor
+                  device_class: door
+                - domain: binary_sensor
+                  device_class: window
+                - domain: binary_sensor
+                  device_class: opening
+                - domain: binary_sensor
+                  device_class: garage_door
+        open_duration:
+          name: Time before notification
+          description: How long a contact has to stay open before the notification is sent.
+          default:
+            minutes: 10
+          selector:
+            duration:
+    notification:
+      name: Notification
+      icon: mdi:cellphone-message
+      input:
+        notify_actions:
+          name: Notify actions
+          description: >
+            One or more notify actions, separated by commas
+            (e.g. `notify.mobile_app_my_phone,notify.mobile_app_other_phone`
+            or a notify group such as `notify.family`).
+          selector:
+            text:
+        custom_name:
+          name: Name
+          description: >
+            Name used as `{{ name }}` in title and message. Leave empty to use
+            the area of the contact (or its name if it has no area). Useful
+            when watching a single contact, e.g. "Front door".
+          default: ""
+          selector:
+            text:
+        notification_title:
+          name: Title
+          description: >
+            Title of the notification. Available variables: `{{ name }}`,
+            `{{ opened_at }}` (time the contact was opened, HH:MM).
+          default: "{{ name }} is still open"
+          selector:
+            text:
+        notification_message:
+          name: Message
+          description: >
+            Message of the notification. Same variables as the title.
+          default: "Open since {{ opened_at }}."
+          selector:
+            text:
+    options:
+      name: Options
+      icon: mdi:cog
+      collapsed: true
+      input:
+        reminder_minutes:
+          name: Reminder interval
+          description: >
+            Repeat the notification every N minutes while the contact stays
+            open. 0 disables reminders.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 1440
+              step: 1
+              unit_of_measurement: min
+              mode: box
+        clear_on_close:
+          name: Clear notification when closed
+          description: Remove the notification once the contact is closed again.
+          default: true
+          selector:
+            boolean:
+        click_url:
+          name: Click URL
+          description: >
+            Page opened when tapping the notification (e.g. `/lovelace/home`).
+            Leave empty to open the app's default page.
+          default: ""
+          selector:
+            text:
+        interruption_level:
+          name: Interruption level (iOS)
+          description: How intrusive the notification is on iOS devices.
+          default: active
+          selector:
+            select:
+              options:
+                - passive
+                - active
+                - time-sensitive
+
+mode: parallel
+max: 25
+max_exceeded: silent
+
+variables:
+  notify_actions_input: !input notify_actions
+  custom_name: !input custom_name
+  reminder_minutes: !input reminder_minutes
+  clear_on_close: !input clear_on_close
+  click_url: !input click_url
+  interruption_level: !input interruption_level
+
+triggers:
+  - trigger: state
+    entity_id: !input contact_sensors
+    to: "on"
+    for: !input open_duration
+
+actions:
+  - variables:
+      contact: "{{ trigger.entity_id }}"
+      name: >
+        {{ custom_name if custom_name | length > 0
+           else area_name(trigger.entity_id) or state_attr(trigger.entity_id, 'friendly_name') }}
+      opened_at: "{{ as_local(trigger.to_state.last_changed).strftime('%H:%M') }}"
+      notify_list: >
+        {{ notify_actions_input.split(',') | map('trim') | reject('eq', '') | list }}
+      notification_tag: "contact-open-{{ trigger.entity_id }}"
+      notification_data: >
+        {% set d = {'tag': notification_tag, 'push': {'interruption-level': interruption_level}} %}
+        {% if click_url | length > 0 %}
+          {% set d = dict(d, url=click_url, clickAction=click_url) %}
+        {% endif %}
+        {{ d }}
+  - repeat:
+      sequence:
+        - repeat:
+            for_each: "{{ notify_list }}"
+            sequence:
+              - action: "{{ repeat.item }}"
+                data:
+                  title: !input notification_title
+                  message: !input notification_message
+                  data: "{{ notification_data }}"
+        - if:
+            - condition: template
+              value_template: "{{ reminder_minutes | int(0) > 0 }}"
+          then:
+            - wait_template: "{{ is_state(contact, 'off') }}"
+              timeout:
+                minutes: "{{ reminder_minutes | int(0) }}"
+          else:
+            - wait_template: "{{ is_state(contact, 'off') }}"
+      until:
+        - condition: template
+          value_template: "{{ wait.completed }}"
+  - if:
+      - condition: template
+        value_template: "{{ clear_on_close }}"
+    then:
+      - repeat:
+          for_each: "{{ notify_list }}"
+          sequence:
+            - action: "{{ repeat.item }}"
+              data:
+                message: clear_notification
+                data:
+                  tag: "{{ notification_tag }}"
