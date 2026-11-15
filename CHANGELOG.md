@@ -1,3 +1,9 @@
+## v0.4.1 (2026-11-15)
+
+### Fix
+
+- **contact_left_open_notification**: skip target triggers when no target is set
+
 ## v0.4.0 (2026-11-02)
 
 ### Feat
