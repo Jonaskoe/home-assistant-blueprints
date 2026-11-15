@@ -158,20 +158,34 @@ variables:
   click_url: !input click_url
   interruption_level: !input interruption_level
 
+# The target triggers below fail to set up when the target is empty ("Target
+# selector {} does not have any selectors defined"), which logs one error per
+# trigger on every start. They are therefore only enabled when "Contacts by
+# area, device or label" actually selects something.
+trigger_variables:
+  contact_target_input: !input contact_target
+  contact_target_set: >
+    {% set t = contact_target_input if contact_target_input is mapping else {} %}
+    {{ true if (t.get('entity_id') or t.get('device_id') or t.get('area_id')
+                or t.get('floor_id') or t.get('label_id')) else false }}
+
 triggers:
   - trigger: state
     entity_id: !input contact_sensors
     to: "on"
     for: !input open_duration
   - trigger: door.opened
+    enabled: "{{ contact_target_set }}"
     target: !input contact_target
     options:
       for: !input open_duration
   - trigger: window.opened
+    enabled: "{{ contact_target_set }}"
     target: !input contact_target
     options:
       for: !input open_duration
   - trigger: garage_door.opened
+    enabled: "{{ contact_target_set }}"
     target: !input contact_target
     options:
       for: !input open_duration
